@@ -18,7 +18,7 @@ pub fn render_barcode(btype: &BarcodeType, data: &str) -> Result<String, String>
     let height: u32 = 120;
 
     let hints: EncodingHintDictionary = HashMap::new();
-    let writer = MultiFormatWriter::default();
+    let writer = MultiFormatWriter;
 
     let bit_matrix = writer
         .encode_with_hints(data, &format, width as i32, height as i32, &hints)

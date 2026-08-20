@@ -3,9 +3,9 @@
 // Covers all 12 required test cases.
 
 #[cfg(test)]
-mod parser_tests {
+mod tests {
     use crate::escpos_parser::parse_escpos;
-    use crate::print_job::{BarcodeType, PrintElement, QrErrorCorrection};
+    use crate::print_job::PrintElement;
     use crate::printer_state::{Alignment, PaperWidth};
 
     const ESC: u8 = 0x1B;
@@ -138,7 +138,7 @@ mod parser_tests {
     #[test]
     fn test_qr_command() {
         let qr_data = b"https://aqnoor.pharmacy/test";
-        let data_len = (qr_data.len() as u16 + 3) as u16;
+        let data_len = qr_data.len() as u16 + 3;
         let pl = (data_len & 0xFF) as u8;
         let ph = (data_len >> 8) as u8;
 
@@ -242,7 +242,7 @@ mod parser_tests {
     #[test]
     fn test_mixed_receipt() {
         let qr_payload = b"QR_DATA_MIXED";
-        let data_len = (qr_payload.len() as u16 + 3) as u16;
+        let data_len = qr_payload.len() as u16 + 3;
         let pl = (data_len & 0xFF) as u8;
         let ph = (data_len >> 8) as u8;
 

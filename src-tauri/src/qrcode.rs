@@ -22,7 +22,7 @@ pub fn render_qrcode(
     let code = QrCode::with_error_correction_level(data.as_bytes(), ec_level)
         .map_err(|e| format!("QR encode error: {}", e))?;
 
-    let module_px = module_size.max(1).min(16) as u32;
+    let module_px = module_size.clamp(1, 16) as u32;
     let quiet = module_px * 4; // 4-module quiet zone
 
     let modules = code.width() as u32;

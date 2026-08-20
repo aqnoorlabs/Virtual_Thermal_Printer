@@ -74,10 +74,10 @@ enum ParserState {
 
     // ESC Z — Chinese/POS-58/80 QR format: ESC Z <v> <r> <k> <xL> <xH> <data...>
     EscZVersion,
-    EscZEcc { v: u8 },
-    EscZSize { v: u8, ec: QrErrorCorrection },
-    EscZLenL { v: u8, ec: QrErrorCorrection, size: u8 },
-    EscZLenH { v: u8, ec: QrErrorCorrection, size: u8, xl: u8 },
+    EscZEcc,
+    EscZSize { ec: QrErrorCorrection },
+    EscZLenL { ec: QrErrorCorrection, size: u8 },
+    EscZLenH { ec: QrErrorCorrection, size: u8, xl: u8 },
     EscZData { ec: QrErrorCorrection, size: u8, remaining: usize, buf: Vec<u8> },
 
     // GS ( k — QR code (5-field protocol)
@@ -98,10 +98,10 @@ enum ParserState {
     // GS v 0 — raster image
     GsRasterExpectZero,
     GsRasterMode,
-    GsRasterXL { mode: u8 },
-    GsRasterXH { mode: u8, xl: u8 },
-    GsRasterYL { mode: u8, xl: u8, xh: u8 },
-    GsRasterYH { mode: u8, xl: u8, xh: u8, yl: u8 },
+    GsRasterXL,
+    GsRasterXH { xl: u8 },
+    GsRasterYL { xl: u8, xh: u8 },
+    GsRasterYH { xl: u8, xh: u8, yl: u8 },
     GsRasterData { width_bytes: u32, height: u32, remaining: usize, buf: Vec<u8> },
 }
 
@@ -131,8 +131,10 @@ pub struct EscPosParser {
 
 impl EscPosParser {
     pub fn new(paper_width: PaperWidth) -> Self {
-        let mut printer = PrinterState::default();
-        printer.paper_width = paper_width;
+        let printer = PrinterState {
+            paper_width,
+            ..Default::default()
+        };
         Self {
             state: ParserState::Normal,
             printer,
@@ -197,7 +199,7 @@ impl EscPosParser {
             ParserState::EscBitImageData { mode, width, height, remaining, mut data } => {
                 data.push(b);
                 if data.len() >= remaining {
-                    let wb = (width as u32 + 7) / 8;
+                    let wb = (width as u32).div_ceil(8);
                     self.emit_raster(wb, height as u32, data, job);
                     ParserState::Normal
                 } else {
@@ -256,8 +258,8 @@ impl EscPosParser {
             }
 
             // ESC Z QR
-            ParserState::EscZVersion                     => ParserState::EscZEcc { v: b },
-            ParserState::EscZEcc { v }                   => {
+            ParserState::EscZVersion                     => ParserState::EscZEcc,
+            ParserState::EscZEcc                         => {
                 let ec = match b {
                     b'L' | b'l' | 0 | 48 => QrErrorCorrection::L,
                     b'M' | b'm' | 1 | 49 => QrErrorCorrection::M,
@@ -265,14 +267,14 @@ impl EscPosParser {
                     b'H' | b'h' | 3 | 51 => QrErrorCorrection::H,
                     _ => QrErrorCorrection::M,
                 };
-                ParserState::EscZSize { v, ec }
+                ParserState::EscZSize { ec }
             }
-            ParserState::EscZSize { v, ec }              => {
-                let size = b.max(1).min(16);
-                ParserState::EscZLenL { v, ec, size }
+            ParserState::EscZSize { ec }              => {
+                let size = b.clamp(1, 16);
+                ParserState::EscZLenL { ec, size }
             }
-            ParserState::EscZLenL { v, ec, size }        => ParserState::EscZLenH { v, ec, size, xl: b },
-            ParserState::EscZLenH { v: _, ec, size, xl } => {
+            ParserState::EscZLenL { ec, size }        => ParserState::EscZLenH { ec, size, xl: b },
+            ParserState::EscZLenH { ec, size, xl } => {
                 let len = (xl as usize) | ((b as usize) << 8);
                 if len == 0 {
                     ParserState::Normal
@@ -325,7 +327,7 @@ impl EscPosParser {
             }
 
             ParserState::GsQrSize { remaining }          => {
-                self.qr_size = b.max(1).min(16);
+                self.qr_size = b.clamp(1, 16);
                 if remaining > 1 {
                     ParserState::GsQrSkip { remaining: remaining - 1 }
                 } else {
@@ -384,14 +386,14 @@ impl EscPosParser {
                     ParserState::GsRasterMode
                 } else {
                     // Fallback: byte is mode directly
-                    ParserState::GsRasterXL { mode: b }
+                    ParserState::GsRasterXL
                 }
             }
-            ParserState::GsRasterMode                    => ParserState::GsRasterXL { mode: b },
-            ParserState::GsRasterXL { mode }             => ParserState::GsRasterXH { mode, xl: b },
-            ParserState::GsRasterXH { mode, xl }         => ParserState::GsRasterYL { mode, xl, xh: b },
-            ParserState::GsRasterYL { mode, xl, xh }     => ParserState::GsRasterYH { mode, xl, xh, yl: b },
-            ParserState::GsRasterYH { mode: _, xl, xh, yl } => {
+            ParserState::GsRasterMode                    => ParserState::GsRasterXL,
+            ParserState::GsRasterXL                      => ParserState::GsRasterXH { xl: b },
+            ParserState::GsRasterXH { xl }               => ParserState::GsRasterYL { xl, xh: b },
+            ParserState::GsRasterYL { xl, xh }           => ParserState::GsRasterYH { xl, xh, yl: b },
+            ParserState::GsRasterYH { xl, xh, yl } => {
                 let width_bytes = (xl as u32) | ((xh as u32) << 8);
                 let height      = (yl as u32) | ((b  as u32) << 8);
                 let remaining   = (width_bytes * height) as usize;

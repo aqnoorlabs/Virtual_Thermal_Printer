@@ -201,7 +201,7 @@ impl PrintJob {
             let hex: Vec<String> = chunk.iter().map(|b| format!("{:02X}", b)).collect();
             let ascii: String = chunk
                 .iter()
-                .map(|&b| if b >= 0x20 && b < 0x7F { b as char } else { '.' })
+                .map(|&b| if (0x20..0x7F).contains(&b) { b as char } else { '.' })
                 .collect();
             out.push_str(&format!(
                 "{:04X}  {:<47}  |{}|\n",

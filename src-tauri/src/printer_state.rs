@@ -5,9 +5,10 @@
 use serde::{Deserialize, Serialize};
 
 /// Paper width preset
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum PaperWidth {
     /// 80mm paper — 72mm printable — ~576 dots at 203 DPI
+    #[default]
     Mm80,
     /// 58mm paper — 48mm printable — ~384 dots at 203 DPI
     Mm58,
@@ -33,55 +34,34 @@ impl PaperWidth {
     }
 }
 
-impl Default for PaperWidth {
-    fn default() -> Self {
-        PaperWidth::Mm80
-    }
-}
-
 /// Text alignment
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum Alignment {
+    #[default]
     Left,
     Center,
     Right,
 }
 
-impl Default for Alignment {
-    fn default() -> Self {
-        Alignment::Left
-    }
-}
-
 /// Font selection
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum Font {
     /// Font A — standard 12×24 dot matrix
+    #[default]
     A,
     /// Font B — smaller 9×17 dot matrix
     B,
 }
 
-impl Default for Font {
-    fn default() -> Self {
-        Font::A
-    }
-}
-
 /// Code page / character encoding
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum CodePage {
+    #[default]
     Pc437,       // IBM Code Page 437 (default)
     Pc850,       // IBM Code Page 850
     Windows1252, // Windows-1252
     Utf8,        // UTF-8 passthrough
     Unknown(u8), // Unrecognised code page
-}
-
-impl Default for CodePage {
-    fn default() -> Self {
-        CodePage::Pc437
-    }
 }
 
 /// Complete printer state — matches a real ESC/POS thermal printer

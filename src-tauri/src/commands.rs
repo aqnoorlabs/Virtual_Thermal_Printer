@@ -28,6 +28,12 @@ impl AppState {
     }
 }
 
+impl Default for AppState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // ── Commands ──────────────────────────────────────────────────────────────────
 
 /// Start the virtual printer TCP server.
