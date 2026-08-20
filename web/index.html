@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AqNoor Virtual Thermal Printer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="src/style.css" />
+</head>
+<body>
+
+<!-- ══ Top Bar ═══════════════════════════════════════════════════════════════ -->
+<header id="topbar">
+  <div id="topbar-left">
+    <div id="app-icon">🖨</div>
+    <div>
+      <div id="app-title">AqNoor Virtual Thermal Printer</div>
+      <div id="app-subtitle">ESC/POS Emulator for Pharmacy POS Testing</div>
+    </div>
+  </div>
+  <div id="topbar-right">
+    <div id="status-badge" class="badge badge-stopped">
+      <span class="status-dot"></span>
+      <span id="status-text">Stopped</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══ Main Layout ═══════════════════════════════════════════════════════════ -->
+<main id="app-layout">
+
+  <!-- ── Left Panel: Controls ──────────────────────────────────────────────── -->
+  <aside id="control-panel">
+
+    <!-- Server Config -->
+    <section class="panel-section">
+      <h2 class="section-title">Server Configuration</h2>
+
+      <div class="field-group">
+        <label class="field-label" for="port-input">TCP Port</label>
+        <input id="port-input" class="field-input" type="number" value="9100" min="1024" max="65535" />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Paper Width</label>
+        <div class="toggle-group">
+          <button id="btn-80mm" class="toggle-btn active" data-width="80">80 mm</button>
+          <button id="btn-58mm" class="toggle-btn" data-width="58">58 mm</button>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button id="btn-start" class="btn btn-primary">▶ Start Server</button>
+        <button id="btn-stop" class="btn btn-danger" disabled>■ Stop</button>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="panel-section">
+      <h2 class="section-title">Statistics</h2>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <div class="stat-value" id="stat-jobs">0</div>
+          <div class="stat-label">Jobs</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="stat-bytes">0</div>
+          <div class="stat-label">Bytes</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="stat-port">9100</div>
+          <div class="stat-label">Port</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="stat-width">80mm</div>
+          <div class="stat-label">Paper</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Test Tools -->
+    <section class="panel-section">
+      <h2 class="section-title">Test Tools</h2>
+      <button id="btn-test-receipt" class="btn btn-secondary full-width">
+        🧾 Send Test Receipt (QR + Barcode)
+      </button>
+      <button id="btn-test-upi" class="btn btn-secondary full-width" style="margin-top:6px;">
+        📱 Send UPI QR Receipt
+      </button>
+      <button id="btn-clear" class="btn btn-ghost full-width" style="margin-top:6px;">
+        🗑 Clear Preview
+      </button>
+      <button id="btn-save-html" class="btn btn-ghost full-width" style="margin-top:6px;">
+        💾 Save as HTML
+      </button>
+    </section>
+
+    <!-- Raw Input -->
+    <section class="panel-section">
+      <h2 class="section-title">Raw Bytes Input</h2>
+      <p class="hint-text">Paste hex bytes (space-separated) to send directly:</p>
+      <textarea id="raw-hex-input" class="field-textarea" placeholder="1B 40 1B 61 01 48 65 6C 6C 6F 0A 1D 56 00" rows="4"></textarea>
+      <button id="btn-send-raw" class="btn btn-secondary full-width" style="margin-top:6px;">
+        ⚡ Send Raw Bytes
+      </button>
+    </section>
+
+  </aside>
+
+  <!-- ── Center: Receipt Preview ───────────────────────────────────────────── -->
+  <section id="preview-panel">
+    <div id="preview-header">
+      <h2 class="section-title" style="margin:0">Receipt Preview</h2>
+      <div id="preview-meta" class="preview-meta-text">No job received yet</div>
+    </div>
+    <div id="preview-container">
+      <div id="preview-placeholder">
+        <div class="placeholder-icon">🖨</div>
+        <div class="placeholder-text">Waiting for print job…</div>
+        <div class="placeholder-hint">Start the server and send ESC/POS data to<br><strong>127.0.0.1:9100</strong></div>
+      </div>
+      <iframe id="preview-frame" style="display:none; width:100%; height:100%; border:none; background:#1a1a1a;"></iframe>
+    </div>
+  </section>
+
+  <!-- ── Right Panel: Debug Log ─────────────────────────────────────────────── -->
+  <aside id="debug-panel">
+
+    <!-- Tab bar -->
+    <div id="debug-tabs">
+      <button class="debug-tab active" data-tab="log">Connection Log</button>
+      <button class="debug-tab" data-tab="hex">Hex Dump</button>
+      <button class="debug-tab" data-tab="commands">Commands</button>
+      <button class="debug-tab" data-tab="warnings">Warnings</button>
+    </div>
+
+    <!-- Log tab -->
+    <div id="tab-log" class="tab-content active">
+      <div class="log-toolbar">
+        <span class="log-title">Server Log</span>
+        <button class="btn-icon" id="btn-clear-log" title="Clear log">✕</button>
+      </div>
+      <div id="log-output" class="log-output"></div>
+    </div>
+
+    <!-- Hex dump tab -->
+    <div id="tab-hex" class="tab-content">
+      <div class="log-toolbar">
+        <span class="log-title">Raw Hex Dump</span>
+        <span id="hex-byte-count" class="log-badge">0 bytes</span>
+      </div>
+      <pre id="hex-output" class="hex-output">No data received yet</pre>
+    </div>
+
+    <!-- Commands tab -->
+    <div id="tab-commands" class="tab-content">
+      <div class="log-toolbar">
+        <span class="log-title">Parsed Commands</span>
+        <span id="cmd-count" class="log-badge">0 commands</span>
+      </div>
+      <div id="commands-output" class="commands-output">No commands parsed yet</div>
+    </div>
+
+    <!-- Warnings tab -->
+    <div id="tab-warnings" class="tab-content">
+      <div class="log-toolbar">
+        <span class="log-title">Parser Warnings</span>
+        <span id="warn-count" class="log-badge warn">0</span>
+      </div>
+      <div id="warnings-output" class="warnings-output">No warnings</div>
+    </div>
+
+  </aside>
+
+</main>
+
+<!-- ══ Toast notification ════════════════════════════════════════════════════ -->
+<div id="toast" class="toast"></div>
+
+<script src="src/main.js" defer></script>
+</body>
+</html>

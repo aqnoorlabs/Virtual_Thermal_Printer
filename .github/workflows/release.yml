@@ -1,0 +1,65 @@
+name: Release Windows App
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag Name (e.g. v1.0.0)'
+        required: false
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build & Release Windows (x64)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Setup Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-pc-windows-msvc
+
+      - name: Install NPM dependencies
+        run: npm install
+
+      - name: Run Unit Tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+      - name: Build and Publish Tauri Release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name || inputs.tag_name }}
+          releaseName: 'AqNoor Virtual Thermal Printer ${{ github.ref_name || inputs.tag_name }}'
+          releaseBody: |
+            ## 🖨 AqNoor Virtual Thermal Printer Release ${{ github.ref_name || inputs.tag_name }}
+            
+            ### ✨ Included in this release:
+            - Virtual ESC/POS Thermal Printer TCP Server (`127.0.0.1:9100`)
+            - 80mm and 58mm live thermal receipt preview with paper cut & styling
+            - Full QR code support (`GS ( k`, `GS v 0`, `ESC Z`, `GS k`, `[UPI_QR:...]`)
+            - 1D barcode generator (Code128, Code39, EAN13, UPCA, etc.)
+            - Built-in test receipt generators & raw hex inspector
+            
+            ### ⬇️ Downloads:
+            Download and run the `.msi` installer or the standalone `.exe` setup file below.
+          releaseDraft: false
+          prerelease: false
+          args: --verbose

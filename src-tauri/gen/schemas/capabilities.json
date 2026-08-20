@@ -1,0 +1,1 @@
+{"default":{"identifier":"default","description":"Default capability for AqNoor Virtual Thermal Printer","local":true,"windows":["main"],"permissions":["core:default","shell:default","dialog:default","dialog:allow-save","fs:default","fs:allow-write-text-file","fs:allow-write-file","fs:allow-read-file","fs:allow-create"]}}

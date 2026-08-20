@@ -1,0 +1,12 @@
+[build]
+# Short path outside project dir — avoids Windows file-lock issues with spaces in path
+target-dir = "C:/cargo-target/aqnoor-printer"
+
+# Minimize temp .o files to reduce Defender lock collisions
+rustflags = ["-C", "codegen-units=1"]
+
+[net]
+retry = 3
+
+[profile.dev]
+incremental = false

@@ -1,0 +1,61 @@
+[package]
+name = "aqnoor-virtual-printer"
+version = "1.0.0"
+description = "AqNoor Virtual Thermal Printer"
+authors = ["AqNoor"]
+edition = "2021"
+
+[lib]
+name = "aqnoor_virtual_printer_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Async runtime for TCP server
+tokio = { version = "1", features = ["full"] }
+
+# Barcode rendering
+rxing = { version = "0.5", default-features = false, features = ["image"] }
+
+# QR code generation
+qrcode = "0.14"
+
+# Image processing
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+
+# Base64 encoding for IPC
+base64 = "0.22"
+
+# Logging
+log = "0.4"
+env_logger = "0.11"
+
+# UUID for print job IDs
+uuid = { version = "1", features = ["v4"] }
+
+# Chrono for timestamps
+chrono = { version = "0.4", features = ["serde"] }
+
+# Once_cell for shared state
+once_cell = "1"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
